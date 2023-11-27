@@ -1,5 +1,5 @@
 # -*- coding: ascii -*-
-from minecraft_with_python.mcwpy import Pack_Meta, Minecraft_Pack_Version
+from mcwpy import Pack_Meta, get_minecraft_pack_version
 import unittest
 
 
@@ -10,7 +10,7 @@ class TestDatapack(unittest.TestCase):
 
     def test_datapack_default_values(self):
         self.assertEqual(Pack_Meta().meta['description'], 'A Minecraft datapack.')
-        self.assertEqual(Pack_Meta().meta['pack_format'], Minecraft_Pack_Version.LATEST)
+        self.assertEqual(Pack_Meta().meta['pack_format'], get_minecraft_pack_version('latest'))
 
     def test_datapack_default_instances(self):
         self.assertIsInstance(Pack_Meta(), Pack_Meta)

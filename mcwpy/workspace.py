@@ -16,14 +16,14 @@ class Workspace:
     def __init__(self, name: str=None, **content) -> None:
         """
         Initialize a workspace.
-        
+
         :param name: The name of the workspace.
         :param content: The content of the workspace.
         """
         self.name = name.lower() if name is not None else f"workspace_{''.join([random.choice(string.ascii_lowercase + string.digits) for _ in range(8)])}"
         self.content = content if len(content) > 0 else {}
 
-        self.namespaces_list = [getattr(Datapack_Namespaces, namespace) for namespace in [e for e in dir(Datapack_Namespaces) if not '_' in e]]
+        self.namespaces_list = [getattr(Datapack_Namespaces, namespace) for namespace in [e for e in dir(Datapack_Namespaces) if not '__' in e]]
 
     def __repr__(self) -> str:
         # print the workspace with each of its arguments and arguments content.
@@ -64,6 +64,7 @@ class Workspace:
                             data = json.load(f)
                             data['values'].append(f"{self.name}:{filename.removesuffix('.json')}")
                         with open(os.path.join(path, 'minecraft', 'tags', 'functions', filename.replace('main', 'tick')), 'w') as f:
+                            data['values'] = list(dict.fromkeys(data['values']))
                             f.write(json.dumps(data, indent=4))
                     else:
                         create_file(filename.replace('main', 'tick'), os.path.join(path, 'minecraft', 'tags', 'functions'), 

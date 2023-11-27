@@ -1,6 +1,6 @@
 # -*- coding: ascii -*-
 from datetime import date
-from _version import __version__
+from mcwpy import __version__
 import requests
 
 
@@ -33,19 +33,19 @@ else:
     quit()
 
 # Verify that the CHANGELOG is up to date
-if f"# {__version__} ({str(date.today()).replace('-', '/')})" in open('CHANGELOG.md').read():
+if f"## [{__version__}] ({str(date.today()).replace('-', '/')})" in open('CHANGELOG.md').read():
     print(f'{Font.OK_GREEN}CHANGELOG.md is up to date.{Font.END}')
 else:
     print(f'{Font.FAIL}Unable to read CHANGELOG.md or missing version details.{Font.END}')
     quit()
 del date
 
-# Verify that the CHANGELOG lines start with a hyphen and end with a period and a double space.
-lines = [line for line in open('CHANGELOG.md').readlines() if not line.startswith('#') and not line.endswith('.  \n') and not line == '\n']
+# Verify that the CHANGELOG lines start with a hyphen and end with a period.
+lines = [line for line in open('CHANGELOG.md').readlines() if not line.startswith(('## ', '###')) and not line.endswith('.\n') and not line == '\n']
 if len(lines) == 0:
     print(f'{Font.OK_GREEN}All lines in CHANGELOG.md seem correct.{Font.END}')
 else:
-    print(f'{Font.FAIL}{len(lines)} {"line" if len(lines) < 2 else "lines"} should start with a hyphen and end with a period and a double space: {lines}.{Font.END}')
+    print(f'{Font.FAIL}{len(lines)} {"line" if len(lines) < 2 else "lines"} should start with a hyphen and end with a period: {lines}.{Font.END}')
     quit()
 
 # Print warning every import between modules should be relative import

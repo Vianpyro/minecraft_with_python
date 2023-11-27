@@ -1,15 +1,13 @@
 # -*- coding: ascii -*-
 from datetime import date
-from time import time
 from typing import Any, Dict, List, Union
 from .pack_meta import Pack_Meta
 from .workspace import Workspace
-from .utility import Minecraft_Pack_Version as MPV
-from .utility import Datapack_Replace_Method as DRM
-from .utility import Font, Datapack_Namespaces
-from .utility import create_file, remove_directory, create_icon_from_string
+from .utility import get_minecraft_pack_version
+from .utility import Font, create_file, remove_directory, create_icon_from_string
 import os
 import shutil
+import time
 
 
 __all__ = ['Datapack']
@@ -25,6 +23,8 @@ class Datapack:
         pack folders/zip-files there. This is similar to the Resource Pack selection screen, and allows the player to enable data packs before \
         the world is generated, and easily customize the load order too.
     """
+    _index = 0
+
     def __init__(self, 
                  title: str=None,
                  path: str=None,
@@ -33,7 +33,6 @@ class Datapack:
                  auto_compile: bool=None,
                  compile_as_zip: bool=None,
                  replace_existing: bool=None,
-                 replace_method: str=None
                  ) -> None:
         """
         Initialize a new Datapack object which will then generate a Minecraft Datapack.
@@ -53,12 +52,11 @@ class Datapack:
         self.auto_compile = auto_compile if auto_compile is not None else False
         self.compile_as_zip = compile_as_zip if compile_as_zip is not None else False
         self.replace_existing = replace_existing if replace_existing is not None else False
-        self.replace_method = replace_method if replace_method is not None else DRM.DESTROY
 
         self.pack_mcmeta = pack_mcmeta if pack_mcmeta is not None else Pack_Meta(
-            author=f"{os.getlogin()} using MCWPy",
-            minecraft_version=MPV.LATEST,
-            version=f'{str(date.today().isocalendar()[0])[-2:]}w{date.today().isocalendar()[1]:0>2}s{hex(int(time()))[2:]}'
+            author=f"{os.getlogin().capitalize()} using MCWPy",
+            minecraft_pack_version=get_minecraft_pack_version(),
+            version=f'{str(date.today().isocalendar()[0])[-2:]}w{date.today().isocalendar()[1]:0>2}s{hex(int(time.time()))[2:]}'
         )
 
         # Verifies that the workspaces are valid.
@@ -75,7 +73,7 @@ class Datapack:
     def __format__(self, format_specifier: str=None) -> str:
         """
         Formats the Datapack in a human-readable format depending on the format specifier.
-        
+
         :param format_specifier: The format specifier.
         :return: The formatted string.
         """
@@ -90,9 +88,22 @@ class Datapack:
         """
         return self.workspaces[index]
 
+    def __iter__(self):
+        """Make the Datapack class able to be iterated upon throught its workspaces."""
+        return self
+
     def __len__(self) -> int:
         """Return the number of Workspaces in the Datapack."""
         return len(self.workspaces)
+
+    def __next__(self) -> Workspace:
+        """Iterate through the datapack Workspaces."""
+        if self._index < len(self.workspaces):
+            result = self.workspaces[self._index]
+            self._index += 1
+            return result
+
+        raise StopIteration('')
 
     def __repr__(self) -> str:
         """Return a string representation of the Datapack."""
@@ -124,21 +135,7 @@ class Datapack:
         """
         if os.path.exists(os.path.join(self.path, self.title)):
             if self.replace_existing or input(f'{Font.WARN}{self.title} already exists, do you want to replace it? [yes/no]: {Font.END}')[0].lower() == 'y':
-                match self.replace_method:
-                    case DRM.DESTROY:
-                        remove_directory(os.path.join(self.path, self.title))
-                    case DRM.KEEP:
-                        raise TypeError(f'{Font.ERROR}Replace method not implemented yet.{Font.END}')
-                    case DRM.REPLACE:
-                        raise TypeError(f'{Font.ERROR}Replace method not implemented yet.{Font.END}')
-                    case _:
-                        if any(
-                            self.replace_method == getattr(Datapack_Namespaces, namespace)
-                            for namespace in [e for e in dir(Datapack_Namespaces) if not '_' in e]
-                        ):
-                            raise TypeError(f'{Font.ERROR}Replace method not implemented yet.{Font.END}')
-                        else:
-                            raise TypeError(f'{Font.ERROR}Wrong replace method.{Font.END}')
+                    remove_directory(os.path.join(self.path, self.title))
             else:
                 raise FileExistsError(f'{Font.ERROR}{self.title} already exists, and you have not chosen to replace it.{Font.END}')
 
@@ -156,6 +153,8 @@ class Datapack:
         # Zip the Datapack.
         if self.compile_as_zip:
             self.to_zip()
+
+        print(f'{Font.FINAL_INFO}Finished generating "{self.title}" at {Font.END}{time.strftime("%r")}{Font.FINAL_INFO}.{Font.END}')
 
     def pop(self, index: int=-1) -> Workspace:
         """
@@ -175,14 +174,17 @@ class Datapack:
                 raise FileExistsError(f'{Font.ERROR}{self.title}.zip already exists, and you have not chosen to replace it.{Font.END}')
 
         # Actually create the zip file.
-        shutil.make_archive(self.title, 'zip', os.path.join(self.path, self.title))
-        
+        shutil.make_archive(os.path.join(self.path, self.title), 'zip', os.path.join(self.path, self.title))
+
         if os.path.exists(os.path.join(self.path, self.title + '.zip')):
-            print(f'{Font.OK_GREEN}Successfuly created the archive "{self.title}.zip".{Font.END}')
+            print(f'{Font.OK_GREEN}Successfuly created the archive "{Font.END}{self.title}.zip{Font.OK_GREEN}".{Font.END}')
 
             # Remove the original files
             if os.path.exists(os.path.join(self.path, self.title)):
                 remove_directory(os.path.join(self.path, self.title))
         else:
             # Print an error message and say the original file was saved.
-            print(f'{Font.ERROR}Failed to create the file "{self.title}.zip".{Font.END}', f'{Font.FINAL_INFO}The file {self.title} was not deleted.{Font.END}')
+            print(
+                f'{Font.ERROR}Failed to create the archive "{self.title}.zip".{Font.END}',
+                f'{Font.FINAL_INFO}The directory "{self.title}" was not deleted.{Font.END}'
+            )

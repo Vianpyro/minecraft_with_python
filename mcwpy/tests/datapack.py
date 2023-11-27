@@ -1,5 +1,5 @@
 # -*- coding: ascii -*-
-from minecraft_with_python.mcwpy import Datapack, Workspace, Pack_Meta
+from mcwpy import Datapack, Workspace, Pack_Meta
 import os
 import unittest
 import shutil

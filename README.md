@@ -42,7 +42,7 @@ my_datapack = Datapack(
     pack_mcmeta = Pack_Meta(
         author = 'Myself',
         description = 'My very own Minecraft datapack',
-        minecraft_version = Minecraft_Pack_Version.LATEST
+        minecraft_version = get_minecraft_pack_version('latest')
     ),
     workspaces = [workspace1]
 )
